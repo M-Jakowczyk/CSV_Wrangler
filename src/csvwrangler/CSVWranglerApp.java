@@ -1,0 +1,281 @@
+package csvwrangler;
+
+import javax.swing.*;
+import javax.swing.table.TableModel;
+import java.awt.*;
+import java.io.File;
+
+/**
+ * Główna klasa aplikacji CSV Data Wrangler - widok w architekturze MVC
+ * @author Mateusz Jakoczyk
+ * @version 1.0
+ */
+public class CSVWranglerApp extends JFrame {
+    private JTable dataTable;
+    private JScrollPane scrollPane;
+    private JLabel statusLabel;
+    private CSVController controller;
+    private CSVTableModel tableModel;
+    private JList<String> columnsList;
+    private JComboBox<String> filterColumnCombo;
+
+    public CSVWranglerApp() {
+        setTitle("CSV Data Wrangler");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(1000, 700);
+        setLocationRelativeTo(null);
+
+        tableModel = new CSVTableModel();
+        controller = new CSVController(this, tableModel);
+
+        initUI();
+    }
+
+    private void initUI() {
+        JPanel mainPanel = new JPanel(new BorderLayout());
+
+        setJMenuBar(createMenuBar());
+        mainPanel.add(createToolbar(), BorderLayout.NORTH);
+
+        dataTable = new JTable(tableModel);
+        scrollPane = new JScrollPane(dataTable);
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
+
+        statusLabel = new JLabel(" Gotowy");
+        JPanel statusPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        statusPanel.add(statusLabel);
+        mainPanel.add(statusPanel, BorderLayout.SOUTH);
+
+        mainPanel.add(createSidePanel(), BorderLayout.EAST);
+
+        add(mainPanel);
+    }
+
+    private JMenuBar createMenuBar() {
+        JMenuBar menuBar = new JMenuBar();
+
+        // Menu Plik
+        JMenu fileMenu = new JMenu("Plik");
+        JMenuItem newItem = new JMenuItem("Nowy plik CSV");
+        newItem.addActionListener(e -> controller.newFile());
+        JMenuItem openItem = new JMenuItem("Otwórz CSV");
+        openItem.addActionListener(e -> controller.openFile());
+        JMenuItem saveItem = new JMenuItem("Zapisz CSV");
+        saveItem.addActionListener(e -> controller.saveFile());
+        JMenuItem saveAsItem = new JMenuItem("Zapisz CSV jako");
+        saveAsItem.addActionListener(e -> controller.saveFileAs());
+        JMenuItem exitItem = new JMenuItem("Wyjdź");
+        exitItem.addActionListener(e -> System.exit(0));
+
+        fileMenu.add(newItem);
+        fileMenu.add(openItem);
+        fileMenu.add(saveItem);
+        fileMenu.add(saveAsItem);
+        fileMenu.addSeparator();
+        fileMenu.add(exitItem);
+
+        // Menu Edycja
+        JMenu editMenu = new JMenu("Edycja");
+        JMenuItem addRowItem = new JMenuItem("Dodaj wiersz");
+        addRowItem.addActionListener(e -> controller.addNewRow());
+        JMenuItem deleteRowItem = new JMenuItem("Usuń wiersz");
+        deleteRowItem.addActionListener(e -> controller.deleteSelectedRow());
+
+        editMenu.add(addRowItem);
+        editMenu.add(deleteRowItem);
+
+//        // Menu Widok
+//        JMenu viewMenu = new JMenu("Widok");
+//        JCheckBoxMenuItem headersItem = new JCheckBoxMenuItem("Pokazuj nagłówki", true);
+//        headersItem.addActionListener(e -> {
+//            tableModel.setHasHeaders(headersItem.isSelected());
+//            controller.refreshData();
+//        });
+//        viewMenu.add(headersItem);
+
+        menuBar.add(fileMenu);
+        menuBar.add(editMenu);
+//        menuBar.add(viewMenu);
+
+        return menuBar;
+    }
+
+    private JToolBar createToolbar() {
+        JToolBar toolbar = new JToolBar();
+        toolbar.setFloatable(false);
+
+        // Przycisk Otwórz
+        JButton newButton = new JButton(new ImageIcon((new ImageIcon("resources/icons/new.png")).getImage().getScaledInstance(25, 25, Image.SCALE_SMOOTH)));
+        newButton.setPreferredSize(new Dimension(25, 25));
+        newButton.setToolTipText("Nowy plik CSV");
+        newButton.addActionListener(e -> controller.newFile());
+
+        // Przycisk Otwórz
+        JButton openButton = new JButton(new ImageIcon((new ImageIcon("resources/icons/open.png")).getImage().getScaledInstance(25, 25, Image.SCALE_SMOOTH)));
+        openButton.setPreferredSize(new Dimension(25, 25));
+        openButton.setToolTipText("Otwórz plik CSV");
+        openButton.addActionListener(e -> controller.openFile());
+
+        // Przycisk Zapisz
+        JButton saveButton = new JButton(new ImageIcon((new ImageIcon("resources/icons/save.png")).getImage().getScaledInstance(25, 25, Image.SCALE_SMOOTH)));
+        saveButton.setToolTipText("Zapisz plik CSV");
+        saveButton.addActionListener(e -> controller.saveFile());
+
+        // Przycisk Zapisz Jako
+        JButton saveAsButton = new JButton(new ImageIcon((new ImageIcon("resources/icons/save-as.png")).getImage().getScaledInstance(25, 25, Image.SCALE_SMOOTH)));
+        saveAsButton.setToolTipText("Zapisz plik CSV jako...");
+        saveAsButton.addActionListener(e -> controller.saveFileAs());
+
+        // Przycisk Dodaj wiersz
+        JButton addButton = new JButton(new ImageIcon((new ImageIcon("resources/icons/add.png")).getImage().getScaledInstance(25, 25, Image.SCALE_SMOOTH)));
+        addButton.setToolTipText("Dodaj nowy wiersz");
+        addButton.addActionListener(e -> controller.addNewRow());
+
+        // Przycisk Usuń wiersz
+        JButton deleteButton = new JButton(new ImageIcon((new ImageIcon("resources/icons/delete.png")).getImage().getScaledInstance(25, 25, Image.SCALE_SMOOTH)));
+        deleteButton.setToolTipText("Usuń zaznaczony wiersz");
+        deleteButton.addActionListener(e -> controller.deleteSelectedRow());
+
+        toolbar.add(newButton);
+        toolbar.add(openButton);
+        toolbar.add(saveButton);
+        toolbar.add(saveAsButton);
+        toolbar.addSeparator();
+        toolbar.add(addButton);
+        toolbar.add(deleteButton);
+
+        return toolbar;
+    }
+
+    private JPanel createSidePanel() {
+        JPanel sidePanel = new JPanel();
+        sidePanel.setLayout(new BoxLayout(sidePanel, BoxLayout.Y_AXIS));
+        sidePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+        // Panel filtrowania
+        JPanel filterPanel = new JPanel(new GridLayout(0, 1));
+        filterPanel.setBorder(BorderFactory.createTitledBorder("Filtrowanie"));
+
+        filterColumnCombo = new JComboBox<>();
+        JComboBox<String> filterOperatorCombo = new JComboBox<>(new String[]{"zawiera", "równa się", "zaczyna się"});
+        JTextField filterValueField = new JTextField();
+        JButton filterButton = new JButton("Filtruj");
+
+        filterButton.addActionListener(e -> {
+            String column = (String) filterColumnCombo.getSelectedItem();
+            String operator = (String) filterOperatorCombo.getSelectedItem();
+            String value = filterValueField.getText();
+            controller.filterData(column, operator, value);
+        });
+
+        JButton clearFilterButton = new JButton("Wyczyść filtry");
+        clearFilterButton.addActionListener(e -> {
+            controller.clearFilters(); // Wywołanie metody czyszczącej filtry
+            filterValueField.setText(""); // Wyczyszczenie pola wartości
+        });
+
+        filterPanel.add(new JLabel("Kolumna:"));
+        filterPanel.add(filterColumnCombo);
+        filterPanel.add(new JLabel("Operator:"));
+        filterPanel.add(filterOperatorCombo);
+        filterPanel.add(new JLabel("Wartość:"));
+        filterPanel.add(filterValueField);
+        filterPanel.add(filterButton);
+        filterPanel.add(clearFilterButton);
+
+        // Panel zarządzania kolumnami
+        JPanel columnsPanel = new JPanel(new BorderLayout());
+        columnsPanel.setBorder(BorderFactory.createTitledBorder("Kolumny"));
+
+        columnsList = new JList<>();
+        columnsList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        JScrollPane columnsScroll = new JScrollPane(columnsList);
+
+        JButton hideColumnsButton = new JButton("Ukryj zaznaczone");
+        hideColumnsButton.addActionListener(e -> {
+            int[] selectedIndices = columnsList.getSelectedIndices();
+            controller.hideColumns(selectedIndices);
+        });
+
+        JButton showAllButton = new JButton("Pokaż wszystkie");
+        showAllButton.addActionListener(e -> controller.showAllColumns());
+
+        JPanel columnsButtonPanel = new JPanel(new GridLayout(1, 2));
+        columnsButtonPanel.add(hideColumnsButton);
+        columnsButtonPanel.add(showAllButton);
+
+        columnsPanel.add(columnsScroll, BorderLayout.CENTER);
+        columnsPanel.add(columnsButtonPanel, BorderLayout.SOUTH);
+
+        sidePanel.add(filterPanel);
+        sidePanel.add(Box.createVerticalStrut(10));
+        sidePanel.add(columnsPanel);
+
+        return sidePanel;
+    }
+
+    // Dodajemy nowe metody dostępowe
+    public JTable getTable() {
+        return dataTable;
+    }
+
+    public int[] getSelectedRow() {
+        return  dataTable.getSelectedRows();
+    }
+
+    public void updateTableModel(TableModel model) {
+        dataTable.setModel(model);
+    }
+
+    public void setStatusMessage(String message) {
+        statusLabel.setText(message);
+    }
+
+    public void updateColumnsList(String[] columns) {
+        columnsList.setListData(columns);
+        filterColumnCombo.setModel(new DefaultComboBoxModel<>(columns));
+    }
+
+    public File showFileOpenDialog() {
+        JFileChooser fileChooser = new JFileChooser();
+        int result = fileChooser.showOpenDialog(this);
+        return result == JFileChooser.APPROVE_OPTION ? fileChooser.getSelectedFile() : null;
+    }
+
+    public File showFileSaveDialog() {
+        JFileChooser fileChooser = new JFileChooser();
+        int result = fileChooser.showSaveDialog(this);
+        return result == JFileChooser.APPROVE_OPTION ? fileChooser.getSelectedFile() : null;
+    }
+
+    public String showInputDialog(String message) {
+        return JOptionPane.showInputDialog(this, message);
+    }
+
+    public int showConfirmDialog(String message) {
+        return JOptionPane.showConfirmDialog(this, message, this.getTitle(), JOptionPane.YES_NO_CANCEL_OPTION);
+    }
+
+    public Object showInputDialog(String message, String title, Object option) {
+        return JOptionPane.showInputDialog(
+                this,
+                message,
+                title,
+                JOptionPane.PLAIN_MESSAGE,
+                null,     //no custom icon
+                null,  //button titles
+                option //default button
+        );
+    }
+
+    public void showErrorMessage(String message) {
+        JOptionPane.showMessageDialog(this, message, "Błąd", JOptionPane.ERROR_MESSAGE);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            CSVWranglerApp app = new CSVWranglerApp();
+            app.setVisible(true);
+        });
+    }
+}
