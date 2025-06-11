@@ -152,6 +152,10 @@ public class CSVController {
      * Wyświetla dialog zapisu pliku i zapisuje dane
      */
     public void saveFileAs() {
+        String separator = (String) view.showInputDialog("Podaj separator danych: ", "Podaj separator danych", tableModel.getSeparator());
+        if (separator != null) {
+            tableModel.setSeparator(separator.charAt(0));
+        }
         File file = view.showFileSaveDialog();
         if (file != null) {
             currentFile = file;
