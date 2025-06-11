@@ -3,6 +3,8 @@ package csvwrangler;
 import javax.swing.*;
 import javax.swing.table.TableModel;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 
 /**
@@ -19,9 +21,24 @@ public class CSVWranglerApp extends JFrame {
     private JList<String> columnsList;
     private JComboBox<String> filterColumnCombo;
 
+    /**
+     * Konstruktor głównego okna aplikacji.
+     * Inicjalizuje komponenty interfejsu użytkownika i kontroler.
+     */
     public CSVWranglerApp() {
         setTitle("CSV Data Wrangler");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        addWindowListener(new WindowAdapter()
+        {
+            public void windowClosing(WindowEvent e)
+            {
+                if (controller.checkFileSaved())
+                    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                else
+                    setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+            }
+        });
+
         setSize(1000, 700);
         setLocationRelativeTo(null);
 
@@ -31,6 +48,10 @@ public class CSVWranglerApp extends JFrame {
         initUI();
     }
 
+    /**
+     * Inicjalizuje interfejs użytkownika aplikacji.
+     * Tworzy i konfiguruje wszystkie komponenty GUI.
+     */
     private void initUI() {
         JPanel mainPanel = new JPanel(new BorderLayout());
 
@@ -51,6 +72,11 @@ public class CSVWranglerApp extends JFrame {
         add(mainPanel);
     }
 
+    /**
+     * Tworzy pasek menu aplikacji.
+     *
+     * @return JMenuBar z skonfigurowanymi menu i pozycjami
+     */
     private JMenuBar createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
 
@@ -84,22 +110,17 @@ public class CSVWranglerApp extends JFrame {
         editMenu.add(addRowItem);
         editMenu.add(deleteRowItem);
 
-//        // Menu Widok
-//        JMenu viewMenu = new JMenu("Widok");
-//        JCheckBoxMenuItem headersItem = new JCheckBoxMenuItem("Pokazuj nagłówki", true);
-//        headersItem.addActionListener(e -> {
-//            tableModel.setHasHeaders(headersItem.isSelected());
-//            controller.refreshData();
-//        });
-//        viewMenu.add(headersItem);
-
         menuBar.add(fileMenu);
         menuBar.add(editMenu);
-//        menuBar.add(viewMenu);
 
         return menuBar;
     }
 
+    /**
+     * Tworzy pasek narzędziowy aplikacji.
+     *
+     * @return JToolBar z przyciskami szybkiego dostępu
+     */
     private JToolBar createToolbar() {
         JToolBar toolbar = new JToolBar();
         toolbar.setFloatable(false);
@@ -147,6 +168,11 @@ public class CSVWranglerApp extends JFrame {
         return toolbar;
     }
 
+    /**
+     * Tworzy panel boczny z narzędziami do filtrowania i zarządzania kolumnami.
+     *
+     * @return JPanel z komponentami do filtrowania i zarządzania kolumnami
+     */
     private JPanel createSidePanel() {
         JPanel sidePanel = new JPanel();
         sidePanel.setLayout(new BoxLayout(sidePanel, BoxLayout.Y_AXIS));
@@ -214,48 +240,102 @@ public class CSVWranglerApp extends JFrame {
         return sidePanel;
     }
 
-    // Dodajemy nowe metody dostępowe
+    /**
+     * Zwraca referencję do tabeli z danymi.
+     *
+     * @return JTable z danymi CSV
+     */
     public JTable getTable() {
         return dataTable;
     }
 
+    /**
+     * Zwraca indeksy zaznaczonych wierszy w tabeli.
+     *
+     * @return tablica indeksów zaznaczonych wierszy
+     */
     public int[] getSelectedRow() {
         return  dataTable.getSelectedRows();
     }
 
+    /**
+     * Aktualizuje model danych tabeli.
+     *
+     * @param model nowy model danych
+     */
     public void updateTableModel(TableModel model) {
         dataTable.setModel(model);
     }
 
+    /**
+     * Ustawia komunikat w pasku statusu.
+     *
+     * @param message tekst komunikatu
+     */
     public void setStatusMessage(String message) {
         statusLabel.setText(message);
     }
 
+    /**
+     * Aktualizuje listę kolumn w panelu bocznym.
+     *
+     * @param columns tablica nazw kolumn
+     */
     public void updateColumnsList(String[] columns) {
         columnsList.setListData(columns);
         filterColumnCombo.setModel(new DefaultComboBoxModel<>(columns));
     }
 
+    /**
+     * Wyświetla dialog otwierania pliku.
+     *
+     * @return wybrany plik lub null jeśli anulowano
+     */
     public File showFileOpenDialog() {
         JFileChooser fileChooser = new JFileChooser();
         int result = fileChooser.showOpenDialog(this);
         return result == JFileChooser.APPROVE_OPTION ? fileChooser.getSelectedFile() : null;
     }
 
+    /**
+     * Wyświetla dialog zapisywania pliku.
+     *
+     * @return wybrany plik lub null jeśli anulowano
+     */
     public File showFileSaveDialog() {
         JFileChooser fileChooser = new JFileChooser();
         int result = fileChooser.showSaveDialog(this);
         return result == JFileChooser.APPROVE_OPTION ? fileChooser.getSelectedFile() : null;
     }
 
+    /**
+     * Wyświetla dialog wprowadzania danych.
+     *
+     * @param message komunikat do wyświetlenia
+     * @return wprowadzony tekst lub null jeśli anulowano
+     */
     public String showInputDialog(String message) {
         return JOptionPane.showInputDialog(this, message);
     }
 
+    /**
+     * Wyświetla dialog potwierdzenia.
+     *
+     * @param message komunikat do wyświetlenia
+     * @return wybrana opcja (YES_NO_CANCEL_OPTION)
+     */
     public int showConfirmDialog(String message) {
         return JOptionPane.showConfirmDialog(this, message, this.getTitle(), JOptionPane.YES_NO_CANCEL_OPTION);
     }
 
+    /**
+     * Wyświetla dialog wprowadzania danych z dodatkowymi opcjami.
+     *
+     * @param message komunikat do wyświetlenia
+     * @param title tytuł okna dialogowego
+     * @param option domyślna opcja
+     * @return wprowadzone dane lub null jeśli anulowano
+     */
     public Object showInputDialog(String message, String title, Object option) {
         return JOptionPane.showInputDialog(
                 this,
@@ -268,10 +348,20 @@ public class CSVWranglerApp extends JFrame {
         );
     }
 
+    /**
+     * Wyświetla komunikat o błędzie.
+     *
+     * @param message treść komunikatu błędu
+     */
     public void showErrorMessage(String message) {
         JOptionPane.showMessageDialog(this, message, "Błąd", JOptionPane.ERROR_MESSAGE);
     }
 
+    /**
+     * Punkt wejścia aplikacji.
+     *
+     * @param args argumenty wiersza poleceń
+     */
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             CSVWranglerApp app = new CSVWranglerApp();

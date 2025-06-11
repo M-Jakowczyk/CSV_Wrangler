@@ -21,6 +21,10 @@ public class CSVController {
         updatePreviousTableModel();
     }
 
+    /**
+     * Sprawdza czy plik został zapisany CSV
+     * @return bool czy aktualnie jest wczytany plik
+     */
     public boolean checkFileSaved(){
         if (currentFile != null) {
             int choice = view.showConfirmDialog("Czy chcesz zapisać aktualny plik CSV?");
@@ -67,6 +71,7 @@ public class CSVController {
             if (tableModel.getRowCount() <= 0) {
                 this.addNewRow();
             }
+            updatePreviousTableModel();
             refreshData();
             view.setStatusMessage(" Utworzono nową tabelę | Rekordów: " + tableModel.getRowCount());
         }
@@ -199,11 +204,9 @@ public class CSVController {
         }
 
         Object[] rowData = new Object[tableModel.getColumnCount()];
-//        for (int i = 0; i < rowData.length; i++) {
-//            String value = view.showInputDialog("Wprowadź wartość dla " + tableModel.getColumnName(i));
-//            rowData[i] = value != null ? value : "";
-//        }
+
         tableModel.addRow(rowData);
+        updatePreviousTableModel();
         view.setStatusMessage(" Dodano nowy wiersz | Rekordów: " + tableModel.getRowCount());
     }
 
@@ -213,10 +216,6 @@ public class CSVController {
     public void deleteSelectedRow() {
         int[] selectedRow = view.getSelectedRow();
         if (selectedRow.length > 0) {
-//            for (int row : selectedRow) {
-//                tableModel.removeRow(row);
-//            }
-
             Stack<Integer> selectedRowStack = new Stack<>();
 
             // Dodawanie wszystkich elementów z selectedRow do stosu
@@ -233,6 +232,7 @@ public class CSVController {
                 this.addNewRow();
             }
             view.updateTableModel(tableModel);
+            updatePreviousTableModel();
             view.setStatusMessage(" Usunięto wiersze: " + Arrays.toString(Arrays.stream(selectedRow).toArray()) + " | Rekordów: " + tableModel.getRowCount());
         } else {
             view.showErrorMessage("Nie wybrano wiersza do usunięcia");
@@ -291,23 +291,11 @@ public class CSVController {
 
         tableModel.setDataVector(newData, columnNames);
         view.setStatusMessage(" Przefiltrowano dane | Pasujących rekordów: " + tableModel.getRowCount());
-//        DefaultTableModel newModel = new DefaultTableModel();
-//        for (int i = 0; i < tableModel.getColumnCount(); i++) {
-//            newModel.addColumn(tableModel.getColumnName(i));
-//        }
-//
-//        for (int row : rowsToKeep) {
-//            Object[] rowData = new Object[tableModel.getColumnCount()];
-//            for (int col = 0; col < rowData.length; col++) {
-//                rowData[col] = tableModel.getValueAt(row, col);
-//            }
-//            newModel.addRow(rowData);
-//        }
-//
-//        tableModel.setDataVector(newModel.getDataVector(), newModel.getColumnIdentifiers());
-//        view.setStatusMessage(" Przefiltrowano dane | Pasujących rekordów: " + tableModel.getRowCount());
     }
 
+    /**
+     * Uaktualnia stan poprzedni modelu tabeli
+     */
     private void updatePreviousTableModel() {
         try {
             prev_tableModel = (CSVTableModel) tableModel.clone();
