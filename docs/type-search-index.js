@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"csvwrangler","l":"CSVController"},{"p":"csvwrangler","l":"CSVTableModel"},{"p":"csvwrangler","l":"CSVWranglerApp"}];updateSearchResults();
